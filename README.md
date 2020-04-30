@@ -7,4 +7,7 @@ On Tindie you can find several ESP based wrist watches and among others the Deau
 
 ![M5StickC](/images/DSTIKE_ESP8266_WristWatch_timelaps.gif)
 
+The project page on hackster.io can be found here:
+[hackster.io page](https://www.hackster.io/hague/esp-wifi-timeserver-synchronized-wrist-watch-8940cd)
+
 [Video on youtube](https://youtu.be/m4BKdPXVOYM)
