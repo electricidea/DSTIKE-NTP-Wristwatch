@@ -12,13 +12,15 @@
  * For details about the NTP function, see: https://youtu.be/r2UAmBLBBRM 
  * 
  * Hague Nusseck @ electricidea
- * v2.1 25.April.2020
+ * v2.2 01.November.2020
  * https://github.com/electricidea/DSTIKE-NTP-Wristwatch
  * 
  * Changelog:
  * v1.3 = - final version based on the NTPtimeESP.h and Timelib.h
  * v2.0 = - first version with the ESP-Library Time functions (Time.h)
- * v2.1 = - added WiFi refresh if NAv-Button is pressed during start up
+ * v2.1 = - added WiFi refresh if Nav-Button is pressed during start up
+ * v2.2 = - Screen Timer can be switched off / on by pressing the NAV-
+ *          Button again when displaying the UP-Time.
  * 
  * Distributed as-is; no warranty is given.
 **************************************************************************/
@@ -33,9 +35,16 @@
 // A simple method to configure multiple WiFi Access Configurations:
 // Add the SSID and the password to the lists.
 // The first entry is a name that is shown on the display during connecting
+/*
 String WiFI_Locations[][3] = {{"Mobile", "Mobile_ssid", "Mobile_pwd"},
                               {"Home", "Home_ssid", "Home_pwd"},
                               {"Work", "Work_ssid", "Work_pwd"},
+                              {"Pub", "Beer4Free", "DontDrinkAndDrive"}};
+*/
+String WiFI_Locations[][3] = {{"ESP-AP", "ESP32-AP2", "123456789"},
+                              {"Mobile", "Xperia Z5 Dual_1280", "HagueSony"},
+                              {"Home", "FingerWechNetGast", "ReinDa2020"},
+                              {"Work", "BEC-Gast", "t027-jbsg-m8gk"},
                               {"Pub", "Beer4Free", "DontDrinkAndDrive"}};
 
 // Library for basic functions of the DSTIKE Hardware
@@ -71,6 +80,9 @@ time_t NTPdiffTime = 0; // example: 1014409342 = 22.02.2002 20:22
 uint8_t last_second;
 uint8_t last_minute;
 
+// Screen flag to let the scrren stay perment on or not
+bool Screen_permanent_on = false;
+
 // variabled to establish a system time in seconds since boot up.
 uint32_t prevMillis = 0;
 uint32_t sysTime;
@@ -103,21 +115,28 @@ void setup() {
   Serial.println("");
   Serial.println("-----------------------");
   Serial.println("-- DSTIKE NTP Watch  --");
-  Serial.println("-- v2.1 / 25.04.2020 --");
+  Serial.println("-- v2.2 / 07.11.2020 --");
   Serial.println("-----------------------");
   // turn the White LED on for half of a second
   Watch.WhiteLED.cycle(100);
+  Serial.println("[OK] cycle white LED");
   delay(100);
   // Blink the RGB LED in RED, GREEN, BLUE and white
   // with reduced brightness
   Watch.RGBLED.cycle(10, 100);
+  Serial.println("[OK] cycle RGB LED");
   // Show Welcome Screen
   Watch.setTextAlignment(TEXT_ALIGN_CENTER);
   Watch.setFont(FONT_1_NORMAL);
+  Serial.println("[OK] Set Font");
   Watch.drawString(OLED_CENTER_W, OLED_Line_1,  "NTP Watch");
+  Serial.println("[OK] draw Text");
   Watch.setFont(ArialMT_Plain_10);
-  Watch.drawString(OLED_CENTER_W, OLED_Line_3, "Version 2.1");
+  Serial.println("[OK] Set Font");
+  Watch.drawString(OLED_CENTER_W, OLED_Line_3, "Version 2.2");
+  Serial.println("[OK] draw Text");
   Watch.updateDisplay();
+  Serial.println("[OK] update Display");
   Watch.setFont(FONT_1_NORMAL);
   Watch.setTextAlignment(TEXT_ALIGN_LEFT);
   delay(3000);
@@ -166,9 +185,11 @@ void loop() {
 
   // display OFF timer
   // millis() will overflow after round about 49 days
-  // better calculate the absolute value o fthe difference
-  if(Watch.screenState && abs(displayOffTimer - millis()) > displayTimeout){
-    Watch.screenOff();
+  // better calculate the absolute value of the difference
+  if(!Screen_permanent_on){
+    if(Watch.screenState && abs(displayOffTimer - millis()) > displayTimeout){
+      Watch.screenOff();
+    }
   }
 
   // trigger every second:
@@ -263,7 +284,28 @@ void loop() {
       Watch.setTextAlignment(TEXT_ALIGN_LEFT);
       // to trigger the full screen update
       last_minute = 100;
-      delay(2500);
+      // diplay the uptime for 2.3 seconds
+      // check if the button is pushed agian
+      // then togle the display-timeout flag
+      unsigned long display_timer = millis();
+      while((display_timer + 2500) > millis()){
+        Watch.updateButtons();
+        if(Watch.NavBtn_PUSH.wasPressed()){
+          Screen_permanent_on = !Screen_permanent_on;
+          display_timer = millis();
+          Watch.clearScreen();
+          Watch.setTextAlignment(TEXT_ALIGN_CENTER);
+          if(Screen_permanent_on){
+            Watch.drawString(OLED_CENTER_W, OLED_Line_3,  "Screen Timer: OFF");
+          } else {
+            Watch.drawString(OLED_CENTER_W, OLED_Line_3,  "Screen Timer: ON");
+          }
+          Watch.updateDisplay();
+          Watch.setTextAlignment(TEXT_ALIGN_LEFT);
+        }
+        // short delay to calm the watchdog
+        delay(10);
+      }
     }
     displayOffTimer = millis();
   }
