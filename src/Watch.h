@@ -37,9 +37,11 @@
 // install:
 // pio lib install "ESP8266 and ESP32 OLED driver for SSD1306 displays"
 // or
-// pio lib install 2978
+// pio lib install 2978@4.1.0
 // or in platformio.ini:
-// lib_deps = 2978
+// lib_deps = 2978@4.1.0
+// NOTE:
+// With version 4.2.0 the screen is not working
 //
 // include Custom fonts Created by http://oleddisplay.squix.ch/
 #include "font.h"
