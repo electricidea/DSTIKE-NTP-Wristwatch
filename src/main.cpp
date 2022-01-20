@@ -187,7 +187,7 @@ void loop() {
   // millis() will overflow after round about 49 days
   // better calculate the absolute value of the difference
   if(!Screen_permanent_on){
-    if(Watch.screenState && abs(displayOffTimer - millis()) > displayTimeout){
+    if(Watch.screenState && abs(int(displayOffTimer - millis())) > displayTimeout){
       Watch.screenOff();
     }
   }
